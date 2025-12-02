@@ -1,0 +1,5 @@
+{
+  "name": "열정 수업 LMS 1103",
+  "description": "An application to help manage and schedule one-on-one classes between teachers and students, inspired by a spreadsheet layout. It allows for easy addition, removal, and assignment of teachers and students, with a visual calendar and progress tracking.",
+  "requestFramePermissions": []
+}
