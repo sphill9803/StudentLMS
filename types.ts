@@ -3,7 +3,7 @@ export interface Student {
   name: string;
   school?: string;
   grade?: string;
-  
+
   // Existing detailed fields
   careerPath?: string; // 진로
   initialRegistrationDate?: string;
@@ -20,7 +20,7 @@ export interface Student {
   totalLessons: number;
   lessonsCompleted: number;
   teacherId?: string;
-  
+
   // New fields
   studentCharacteristics?: string;
   studentCharacteristicsWrittenDate?: string;
@@ -51,6 +51,7 @@ export interface Teacher {
   residentRegistrationNumber?: string; // '주민번호'
   email?: string; // '이메일 주소'
   bankAccountNumber?: string; // '통장번호'
+  mustChangePassword?: boolean;
 }
 
 export enum LessonStatus {
@@ -65,7 +66,7 @@ export interface Lesson {
   id: string;
   date: string; // ISO String for consistency
   status: LessonStatus;
-  
+
   indexUsage?: string;
   planUploadDate?: string;
   planFileLink?: string;

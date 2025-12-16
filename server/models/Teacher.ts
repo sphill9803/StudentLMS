@@ -15,6 +15,8 @@ export interface ITeacher extends Document {
     residentRegistrationNumber?: string;
     email?: string;
     bankAccountNumber?: string;
+    password?: string;
+    mustChangePassword?: boolean;
 }
 
 const TeacherSchema: Schema = new Schema({
@@ -32,6 +34,8 @@ const TeacherSchema: Schema = new Schema({
     residentRegistrationNumber: { type: String },
     email: { type: String },
     bankAccountNumber: { type: String },
+    password: { type: String, default: '1234' },
+    mustChangePassword: { type: Boolean, default: true },
 });
 
 export default mongoose.model<ITeacher>('Teacher', TeacherSchema);

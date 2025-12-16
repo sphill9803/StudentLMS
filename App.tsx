@@ -14,6 +14,9 @@ import StudentDetail from './components/StudentDetail';
 import TeacherDetail from './components/TeacherDetail';
 import ScheduleGrid from './components/ScheduleGrid';
 
+import Login from './components/Login';
+import PasswordChange from './components/PasswordChange';
+
 // FIX: Export the View type for other components to use.
 export type View =
     | 'dashboard'
@@ -30,26 +33,17 @@ export type View =
 
 const generateId = () => `id_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`;
 
-const RoleSwitcher = ({ role, setRole }: { role: string; setRole: (role: 'admin' | 'teacher') => void }) => (
-    <div className="bg-gray-800 text-white p-2 flex justify-center items-center gap-4 fixed top-0 left-0 w-full z-[100]">
-        <span className="font-bold text-sm sm:text-base">View as:</span>
-        <button onClick={() => setRole('admin')} className={`rounded px-3 py-1 transition-colors text-sm sm:text-base ${role === 'admin' ? 'bg-blue-500 font-semibold' : 'bg-gray-600 hover:bg-gray-500'}`}>
-            관리자
-        </button>
-        <button onClick={() => setRole('teacher')} className={`rounded px-3 py-1 transition-colors text-sm sm:text-base ${role === 'teacher' ? 'bg-green-500 font-semibold' : 'bg-gray-600 hover:bg-gray-500'}`}>
-            선생님
-        </button>
-    </div>
-);
-
-
 const App: React.FC = () => {
+    const [user, setUser] = useState<{ role: 'admin' | 'teacher'; teacher?: Teacher } | null>(null);
+
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
     const [lessons, setLessons] = useState<{ [key: string]: Lesson[] }>({});
 
     // Fetch initial data
     useEffect(() => {
+        if (!user) return; // Fetch only if logged in
+
         const fetchData = async () => {
             try {
                 const [teachersRes, studentsRes, lessonsRes] = await Promise.all([
@@ -85,7 +79,7 @@ const App: React.FC = () => {
         };
 
         fetchData();
-    }, []);
+    }, [user]);
 
     const [studentsWithLessons, setStudentsWithLessons] = useState<StudentWithLessons[]>([]);
     const [unassignedStudents, setUnassignedStudents] = useState<StudentWithLessons[]>([]);
@@ -104,7 +98,6 @@ const App: React.FC = () => {
     const [isLessonDetailModalOpen, setIsLessonDetailModalOpen] = useState(false);
     const [editingLessonInfo, setEditingLessonInfo] = useState<{ studentId: string; lesson: Lesson } | null>(null);
 
-    const [role, setRole] = useState<'admin' | 'teacher'>('admin');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Form states for modals
@@ -331,20 +324,44 @@ const App: React.FC = () => {
         { key: 'studentSheet', label: '학생별 수업 시트' },
     ];
 
+    if (!user) {
+        return <Login onLogin={setUser} />;
+    }
+
+    if (user.role === 'teacher' && user.teacher?.mustChangePassword) {
+        return (
+            <PasswordChange
+                id={user.teacher.phone || ''} // Use phone as ID
+                onSuccess={(updatedTeacher) => setUser({ ...user, teacher: updatedTeacher })}
+            />
+        );
+    }
+
     return (
         <div className="pt-12">
-            <RoleSwitcher role={role} setRole={setRole} />
-            {role === 'admin' ? (
-                <div className="flex h-screen bg-gray-100">
+            {/* Header / Nav - Updated for User Role */}
+            <div className="bg-white border-b fixed top-0 left-0 w-full z-10 px-4 py-2 flex justify-between items-center h-12">
+                <div className="font-bold text-xl text-blue-600">열정스토리 LMS</div>
+                <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-600">
+                        {user.role === 'admin' ? '관리자' : `${user.teacher?.name} 선생님`}
+                    </span>
+                    <button onClick={() => setUser(null)} className="text-sm text-red-500 hover:text-red-700 font-medium">로그아웃</button>
+                </div>
+            </div>
+
+            {user.role === 'admin' ? (
+                <div className="flex h-screen bg-gray-100 pt-12">
+                    {/* Sidebar Logic for Mobile */}
                     {isSidebarOpen && (
                         <div
                             className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
                             onClick={() => setIsSidebarOpen(false)}
                         ></div>
                     )}
-                    <aside className={`fixed top-0 left-0 w-64 bg-white shadow-md flex flex-col h-full z-40 transform transition-transform md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                        <div className="p-6 text-2xl font-bold text-blue-600 border-b">
-                            열정스토리
+                    <aside className={`fixed top-12 left-0 w-64 bg-white shadow-md flex flex-col h-[calc(100vh-48px)] z-40 transform transition-transform md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-6 text-xl font-bold text-gray-700 border-b">
+                            메뉴
                         </div>
                         <nav className="flex-grow p-4">
                             <ul>
@@ -366,8 +383,8 @@ const App: React.FC = () => {
                             </ul>
                         </nav>
                     </aside>
-                    <div className="flex-1 flex flex-col">
-                        <header className="md:hidden bg-white shadow-sm flex items-center justify-between p-4 sticky top-12 z-20">
+                    <div className="flex-1 flex flex-col h-[calc(100vh-48px)] overflow-hidden">
+                        <header className="md:hidden bg-white shadow-sm flex items-center justify-between p-4 z-20">
                             <button onClick={() => setIsSidebarOpen(true)} className="text-gray-600">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -403,20 +420,68 @@ const App: React.FC = () => {
                             size={modalContent === 'studentCharacteristics' ? '2xl' : 'lg'}
                         >
                             {modalContent === 'addTeacher' && teacherFormData && (
-                                <form onSubmit={(e) => { e.preventDefault(); handleSaveTeacher(teacherFormData); }} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">이름</label>
-                                        <input type="text" value={teacherFormData.name || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, name: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
+                                <form onSubmit={(e) => { e.preventDefault(); handleSaveTeacher(teacherFormData); }} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">이름 <span className="text-red-500">*</span></label>
+                                            <input type="text" value={teacherFormData.name || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, name: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">전공/출신학교 <span className="text-red-500">*</span></label>
+                                            <input type="text" value={teacherFormData.major || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, major: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">전화번호</label>
+                                            <input type="tel" value={teacherFormData.phone || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, phone: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="010-0000-0000" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">이메일</label>
+                                            <input type="email" value={teacherFormData.email || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, email: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">생년월일</label>
+                                            <input type="date" value={teacherFormData.dob || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, dob: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">주민등록번호</label>
+                                            <input type="text" value={teacherFormData.residentRegistrationNumber || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, residentRegistrationNumber: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="000000-0000000" />
+                                        </div>
                                     </div>
+
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">출신학교</label>
-                                        <input type="text" value={teacherFormData.major || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, major: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
+                                        <label className="block text-sm font-medium text-gray-700">주소</label>
+                                        <input type="text" value={teacherFormData.address || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, address: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
                                     </div>
+
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">계약 만료월</label>
-                                        <input type="month" value={teacherFormData.contractEndDate || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, contractEndDate: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        <label className="block text-sm font-medium text-gray-700">계좌번호</label>
+                                        <input type="text" value={teacherFormData.bankAccountNumber || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, bankAccountNumber: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="은행명 계좌번호" />
                                     </div>
-                                    <div className="flex justify-end pt-4 gap-2">
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">계약일</label>
+                                            <input type="date" value={teacherFormData.contractDate || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, contractDate: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">수업 시작일</label>
+                                            <input type="date" value={teacherFormData.classStartDate || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, classStartDate: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">계약 만료월</label>
+                                            <input type="month" value={teacherFormData.contractEndDate || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, contractEndDate: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">계약 종료일</label>
+                                            <input type="date" value={teacherFormData.contractTerminationDate || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, contractTerminationDate: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">성범죄 경력 조회일</label>
+                                            <input type="date" value={teacherFormData.policeCheckDate || ''} onChange={(e) => setTeacherFormData(prev => ({ ...prev, policeCheckDate: e.target.value }))} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end pt-4 gap-2 border-t mt-4 sticky bottom-0 bg-white">
                                         <button type="button" onClick={() => setIsModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">취소</button>
                                         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">저장</button>
                                     </div>

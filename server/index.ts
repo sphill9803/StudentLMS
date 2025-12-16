@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import teacherRoutes from './routes/teachers';
 import studentRoutes from './routes/students';
 import lessonRoutes from './routes/lessons';
+import authRoutes from './routes/auth';
 
 dotenv.config({ path: '../.env.local' });
 
@@ -22,6 +23,7 @@ mongoose.connect(MONGODB_URI)
     .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/lessons', lessonRoutes);
