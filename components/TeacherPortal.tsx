@@ -3,9 +3,9 @@ import { Teacher, StudentWithLessons, Lesson } from '../types';
 import EditableLessonSheet from './EditableLessonSheet';
 
 const StudentInfoCard: React.FC<{
-  registrationPeriod: string;
-  remainingMonths: string;
-  remainingLessons: string;
+    registrationPeriod: string;
+    remainingMonths: string;
+    remainingLessons: string;
 }> = ({ registrationPeriod, remainingMonths, remainingLessons }) => (
     <div className="mb-6">
         <div className="p-4 bg-white rounded-xl shadow-md border border-gray-200">
@@ -32,13 +32,14 @@ const StudentInfoCard: React.FC<{
 
 
 const TeacherPortal: React.FC<{
-  teachers: Teacher[];
-  students: StudentWithLessons[];
-  onSaveLesson: (studentId: string, lesson: Lesson) => void;
-}> = ({ teachers, students, onSaveLesson }) => {
-    
-    // For demonstration, we'll hardcode the logged-in teacher as "박건우".
-    const loggedInTeacher = useMemo(() => teachers.find(t => t.name === '박건우'), [teachers]);
+    teachers: Teacher[];
+    students: StudentWithLessons[];
+    currentTeacher: Teacher;
+    onSaveLesson: (studentId: string, lesson: Lesson) => void;
+}> = ({ teachers, students, currentTeacher, onSaveLesson }) => {
+
+    // Use the passed currentTeacher prop
+    const loggedInTeacher = currentTeacher;
 
     const assignedStudents = useMemo(() => {
         if (!loggedInTeacher) return [];
@@ -52,7 +53,7 @@ const TeacherPortal: React.FC<{
             setSelectedStudentId(assignedStudents[0].id);
         }
     }, [assignedStudents, selectedStudentId]);
-    
+
     const selectedStudent = useMemo(() => {
         return assignedStudents.find(s => s.id === selectedStudentId);
     }, [assignedStudents, selectedStudentId]);
@@ -61,7 +62,7 @@ const TeacherPortal: React.FC<{
         if (!selectedStudent || !selectedStudent.reRegistrationMonth) {
             return '미지정';
         }
-        
+
         try {
             const [yearStr, monthStr] = selectedStudent.reRegistrationMonth.split('-');
             const year = parseInt(yearStr, 10);
@@ -100,9 +101,9 @@ const TeacherPortal: React.FC<{
             const today = new Date();
 
             if (today > endDate) return '0 개월';
-            
+
             const monthDiff = (endDate.getFullYear() - today.getFullYear()) * 12 + (endDate.getMonth() - today.getMonth());
-            
+
             return `${monthDiff + 1} 개월`;
 
         } catch {
@@ -116,14 +117,14 @@ const TeacherPortal: React.FC<{
     }, [selectedStudent]);
 
     if (!loggedInTeacher) {
-        return <div className="p-8 text-center text-red-500">Error: Could not find teacher "박건우".</div>;
+        return <div className="p-8 text-center text-red-500">오류: 로그인된 선생님 정보를 찾을 수 없습니다.</div>;
     }
 
     return (
         <div className="flex flex-col md:flex-row h-screen bg-gray-100 font-sans">
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex w-72 bg-white shadow-lg flex-col">
-                 <div className="p-6 border-b">
+                <div className="p-6 border-b">
                     <h1 className="text-2xl font-bold text-green-600">선생님 포털</h1>
                     <p className="text-gray-500 mt-1">{loggedInTeacher.name} 선생님</p>
                 </div>
@@ -142,7 +143,7 @@ const TeacherPortal: React.FC<{
                     {assignedStudents.length === 0 && <p className="px-3 text-gray-500">담당 학생이 없습니다.</p>}
                 </nav>
             </aside>
-            
+
             {/* Mobile Header */}
             <header className="md:hidden bg-white shadow-md p-4">
                 <div className="flex justify-between items-center mb-4">
@@ -161,21 +162,21 @@ const TeacherPortal: React.FC<{
                         </button>
                     ))}
                 </div>
-                 {assignedStudents.length === 0 && <p className="text-center text-gray-500 py-2">담당 학생이 없습니다.</p>}
+                {assignedStudents.length === 0 && <p className="text-center text-gray-500 py-2">담당 학생이 없습니다.</p>}
             </header>
 
             <main className="flex-1 p-4 sm:p-8 overflow-auto">
                 {selectedStudent ? (
                     <>
-                        <StudentInfoCard 
+                        <StudentInfoCard
                             registrationPeriod={registrationPeriod}
                             remainingMonths={remainingMonths}
                             remainingLessons={remainingLessons}
                         />
                         <EditableLessonSheet
-                            student={selectedStudent} 
-                            teacher={loggedInTeacher} 
-                            onSaveLesson={onSaveLesson} 
+                            student={selectedStudent}
+                            teacher={loggedInTeacher}
+                            onSaveLesson={onSaveLesson}
                         />
                     </>
                 ) : (

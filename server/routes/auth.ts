@@ -14,7 +14,9 @@ router.post('/login', async (req, res) => {
 
         // 2. Teacher Login
         // We assume 'id' is the phone number for teachers as per requirement
-        const teacher = await Teacher.findOne({ phone: id });
+        // Sanitize Input
+        const sanitizedId = id.replace(/-/g, '');
+        const teacher = await Teacher.findOne({ phone: sanitizedId });
 
         if (teacher) {
             if (teacher.password === password) {

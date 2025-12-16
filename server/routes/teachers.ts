@@ -16,7 +16,10 @@ router.get('/', async (req, res) => {
 // Create a teacher
 router.post('/', async (req, res) => {
     try {
-        const newTeacher = new Teacher(req.body);
+        const teacherData = { ...req.body };
+        if (teacherData.phone) teacherData.phone = teacherData.phone.replace(/-/g, '');
+
+        const newTeacher = new Teacher(teacherData);
         const savedTeacher = await newTeacher.save();
         res.status(201).json(savedTeacher);
     } catch (err) {
@@ -27,9 +30,12 @@ router.post('/', async (req, res) => {
 // Update a teacher
 router.put('/:id', async (req, res) => {
     try {
+        const updateData = { ...req.body };
+        if (updateData.phone) updateData.phone = updateData.phone.replace(/-/g, '');
+
         const updatedTeacher = await Teacher.findOneAndUpdate(
             { id: req.params.id },
-            req.body,
+            updateData,
             { new: true }
         );
         if (!updatedTeacher) {

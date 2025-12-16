@@ -21,7 +21,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ id, password }),
+                body: JSON.stringify({ id: id.replace(/-/g, ''), password }),
             });
 
             const data = await response.json();

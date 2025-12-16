@@ -11,6 +11,8 @@
 
 ### 1. MongoDB 설정
 MongoDB가 설치되어 있지 않다면 설치하고 서비스를 시작해야 합니다.
+
+**macOS (Homebrew):**
 ```bash
 # 설치
 brew tap mongodb/brew
@@ -19,6 +21,27 @@ brew install mongodb-community@7.0
 # 서비스 시작
 brew services start mongodb/brew/mongodb-community@7.0
 ```
+
+**Linux (Ubuntu/Debian):**
+```bash
+# GPG 키 가져오기
+curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
+   sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
+   --dearmor
+
+# 리스트 파일 생성 (Ubuntu 22.04 jammy 기준)
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+
+# 설치
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+
+# 서비스 시작
+sudo systemctl start mongod
+sudo systemctl enable mongod
+```
+*다른 Linux 배포판은 [공식 문서](https://www.mongodb.com/docs/manual/administration/install-on-linux/)를 참고하세요.*
+
 
 ### 2. 프로젝트 의존성 설치
 프로젝트 루트와 서버 디렉토리 모두 의존성을 설치해야 합니다.
@@ -66,6 +89,6 @@ npm run dev
 - **PW**: `admin1234`
 
 ### 선생님 (Teacher)
-- **ID**: `010-5582-9031` (예시: 배한일 선생님)
+- **ID**: `01055829031` (예시: 배한일 선생님)
 - **PW**: `1234` (기본값)
 - *Note*: 선생님은 최초 로그인 시 비밀번호 변경이 요구됩니다.

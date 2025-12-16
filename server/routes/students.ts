@@ -16,7 +16,11 @@ router.get('/', async (req, res) => {
 // Create a student
 router.post('/', async (req, res) => {
     try {
-        const newStudent = new Student(req.body);
+        const studentData = { ...req.body };
+        if (studentData.phoneStudent) studentData.phoneStudent = studentData.phoneStudent.replace(/-/g, '');
+        if (studentData.phoneParent) studentData.phoneParent = studentData.phoneParent.replace(/-/g, '');
+
+        const newStudent = new Student(studentData);
         const savedStudent = await newStudent.save();
         res.status(201).json(savedStudent);
     } catch (err) {
@@ -27,9 +31,13 @@ router.post('/', async (req, res) => {
 // Update a student
 router.put('/:id', async (req, res) => {
     try {
+        const updateData = { ...req.body };
+        if (updateData.phoneStudent) updateData.phoneStudent = updateData.phoneStudent.replace(/-/g, '');
+        if (updateData.phoneParent) updateData.phoneParent = updateData.phoneParent.replace(/-/g, '');
+
         const updatedStudent = await Student.findOneAndUpdate(
             { id: req.params.id },
-            req.body,
+            updateData,
             { new: true }
         );
         if (!updatedStudent) {

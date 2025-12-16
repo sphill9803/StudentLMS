@@ -146,16 +146,27 @@ const App: React.FC = () => {
 
 
     const handleSaveTeacher = useCallback((teacherToSave: Partial<Teacher>) => {
+        // Strip hyphens from phone number
+        const processedTeacher = {
+            ...teacherToSave,
+            phone: teacherToSave.phone ? teacherToSave.phone.replace(/-/g, '') : teacherToSave.phone
+        };
+
         if (teacherToSave.id) {
-            setTeachers(prev => prev.map(t => t.id === teacherToSave.id ? { ...t, ...teacherToSave } as Teacher : t));
+            setTeachers(prev => prev.map(t => t.id === teacherToSave.id ? { ...t, ...processedTeacher } as Teacher : t));
         } else {
-            setTeachers(prev => [...prev, { ...teacherToSave, id: generateId() } as Teacher]);
+            setTeachers(prev => [...prev, { ...processedTeacher, id: generateId() } as Teacher]);
         }
         setIsModalOpen(false);
     }, []);
 
     const handleSaveStudent = useCallback((studentToSave: Partial<StudentWithLessons>) => {
         const studentData: Partial<Student> = { ...studentToSave };
+
+        // Strip hyphens from phone numbers
+        if (studentData.phoneStudent) studentData.phoneStudent = studentData.phoneStudent.replace(/-/g, '');
+        if (studentData.phoneParent) studentData.phoneParent = studentData.phoneParent.replace(/-/g, '');
+
         delete (studentData as Partial<StudentWithLessons>).lessons;
 
         if (studentToSave.id) {
@@ -571,11 +582,22 @@ const App: React.FC = () => {
                     )}
                 </div>
             ) : (
-                <TeacherPortal
-                    teachers={teachers}
-                    students={studentsWithLessons}
-                    onSaveLesson={handleSaveLesson}
-                />
+                user.teacher ? (
+                    <TeacherPortal
+                        teachers={teachers}
+                        students={studentsWithLessons}
+                        currentTeacher={user.teacher}
+                        onSaveLesson={handleSaveLesson}
+                    />
+                ) : (
+                    <div className="flex items-center justify-center h-screen bg-gray-100">
+                        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+                            <p className="text-red-500 font-bold mb-2">오류</p>
+                            <p>선생님 정보를 불러올 수 없습니다.</p>
+                            <button onClick={() => setUser(null)} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">로그아웃</button>
+                        </div>
+                    </div>
+                )
             )}
         </div>
     );
